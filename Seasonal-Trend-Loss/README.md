@@ -35,4 +35,75 @@ for group in groups:
 # plt.savefig('air_pollution.png')
 plt.show()
 ```
+![air_pollution]()
+根据上图可以看到，根据时间有很多相关的因变量 \
+在这里，我们采用pollution_today作为因变量，看时间和pollution_today之间的关系
+**(2)数据平滑与参数设置**
+在做STL分解之前，我们先对时序数据进行平滑，这里采用python中的rolling作为窗口平滑函数，窗口大小选择5，我们拿365个数据，去预测未来10天得数据 
+```
+window_size = 5   # 这里window_size是做滑动窗口时候的大小，可以按照自己的数据，进行更换
+max_points = 365 # 指的是准备做时序分解时候的大小，可以按照自己的数据进行更换
+filling_points=10   # 预测多少的未来数据，可以按照自己的数据进行更换
+s = air_pollution['pollution_today'][:max_points+filling_points].rolling(window=window_size).mean()
+```
+**(3)数据补全**
+拿到数据后，要再次做滤波和平滑，让原始数据噪音更小。并且也要补充未来10个点的值，在这里，采用均值方法对未来10个点进行补全
+```
+# 这段方法是用来求平均
+def filling_future_points(list, num=10):
+    nozero_list = [one for one in list if one != 0]
+    before_avg, last_avg = sum(nozero_list[:num]) / num, sum(nozero_list[-1 * num:]) / num
+    res_list = []
+    for i in range(len(list)):
+        if list[i] != 0:
+            res_list.append(list[i])
+        else:
+            tmp = int(num / 2) + 1
+            if i <= tmp:
+                res_list.append(int(before_avg))
+            elif i >= len(list) - tmp:
+                res_list.append(int(last_avg))
+                slice_list = list[i - tmp:i + tmp + 1]
+                res_list.append(int(sum(slice_list) / (num - 1)))
+```
+补全之后，由于窗口滑动平均，会导致初始的window_size-1个点得数值为空，以及未来的最后window_size-1个点得数据也为空，所以还需要补全一前一后的窗口值
+```
+filling_list = filling_future_points(air_pollution['pollution_today'][max_points-filling_points:max_points], num=filling_points)
+true_result = air_pollution['pollution_today'][max_points:max_points+filling_points]
 
+for i in range(window_size):
+    s[i] = air_pollution['pollution_today'][i]
+for i in range(max_points, max_points + filling_points):
+    s[i] = filling_list[i - max_points]
+```
+**(4)时序分解**
+```
+result1 = seasonal_decompose(s, model='multiplicative')
+```
+可以得到下图:
+* 第一个子图是原始数据
+* 第二个子图是趋势，可以看到空气污染本身没有趋势
+* 第三个图可以看到周期性特别强
+* 最后Resid代表了残差
+![]()
+
+## 三、模型评估
+时间序列的评估一般是采用MSE(Mean Square Error)进行评估的，一般MSE越小，代表和原始的时间序列之间重合度越高
+```
+def calculate_mse(a, b, lower, upper):
+    error = 0
+    for i in range(lower, upper):
+        error += (a[i] - b[i]) * (a[i] - b[i])
+    return error / (upper - lower)
+
+
+prdict_value = result1.seasonal[-filling_points:] + result1.trend[-filling_points:]
+for i in range(max_points, max_points+filling_points):
+    if pd.isna(prdict_value[i - max_points]):
+        prdict_value[i - max_points] = s[i]
+    else:
+        continue
+
+mse_error = calculate_mse(prdict_value, true_result, 0, len(true_result))
+print(mse_error)
+```
