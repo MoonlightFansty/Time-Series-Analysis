@@ -1,4 +1,4 @@
 # Time-Series-Analysis
 ## Seasonal-Trend-Loss
-Constructe Model
+Constructe Model \
 y(t) = Trend + Seasonality + Residual
