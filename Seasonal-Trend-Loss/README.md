@@ -11,7 +11,7 @@ STL包含一系列局部加权回归平滑器，计算速度比较快，可以�
 
 ## 二、STL的时序分解
 以北京PM2.5为例，进行STL方法的时序分解 \
-**(1)读取数据** \
+**(1)读取数据**
 ```
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -35,10 +35,10 @@ for group in groups:
 # plt.savefig('air_pollution.png')
 plt.show()
 ```
-![air_pollution]()
+![air_pollution]() \
 根据上图可以看到，根据时间有很多相关的因变量 \
-在这里，我们采用pollution_today作为因变量，看时间和pollution_today之间的关系
-**(2)数据平滑与参数设置**
+在这里，我们采用pollution_today作为因变量，看时间和pollution_today之间的关系 \
+**(2)数据平滑与参数设置** \
 在做STL分解之前，我们先对时序数据进行平滑，这里采用python中的rolling作为窗口平滑函数，窗口大小选择5，我们拿365个数据，去预测未来10天得数据 
 ```
 window_size = 5   # 这里window_size是做滑动窗口时候的大小，可以按照自己的数据，进行更换
@@ -46,7 +46,7 @@ max_points = 365 # 指的是准备做时序分解时候的大小，可以按照�
 filling_points=10   # 预测多少的未来数据，可以按照自己的数据进行更换
 s = air_pollution['pollution_today'][:max_points+filling_points].rolling(window=window_size).mean()
 ```
-**(3)数据补全**
+**(3)数据补全** \
 拿到数据后，要再次做滤波和平滑，让原始数据噪音更小。并且也要补充未来10个点的值，在这里，采用均值方法对未来10个点进行补全
 ```
 # 这段方法是用来求平均
