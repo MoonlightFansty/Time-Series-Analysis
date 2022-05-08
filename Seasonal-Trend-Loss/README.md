@@ -29,10 +29,10 @@ i = 1
 for group in groups:
     plt.subplot(len(groups), 1, i)
     plt.plot(values[:, group])
-    plt.title(air_pollution.columns[group], y=8.5, loc='right')
+    plt.title(air_pollution.columns[group], y=0.5, loc='right')
     i += 1
 
 # plt.savefig('air_pollution.png')
-# plt.show()
+plt.show()
 ```
 
